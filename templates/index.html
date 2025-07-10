@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tab-active {
+            @apply bg-indigo-600 text-white;
+        }
+        .tab-inactive {
+            @apply bg-gray-200 text-gray-700 hover:bg-gray-300;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-blue-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <header class="text-center mb-10">
+                <h1 class="text-4xl font-bold text-indigo-700 mb-2">AI Content Generator</h1>
+                <p class="text-gray-600">Create amazing content with the power of AI</p>
+            </header>
+
+            <!-- Tab Navigation -->
+            <div class="flex mb-8 overflow-x-auto pb-2">
+                <button onclick="switchTab('story')" id="story-tab" class="tab-active px-6 py-3 rounded-t-lg font-medium transition-all duration-200 mr-2">
+                    <i class="fas fa-book-open mr-2"></i>Story
+                </button>
+                <button onclick="switchTab('poem')" id="poem-tab" class="tab-inactive px-6 py-3 rounded-t-lg font-medium transition-all duration-200 mr-2">
+                    <i class="fas fa-pen-fancy mr-2"></i>Poem
+                </button>
+                <button onclick="switchTab('joke')" id="joke-tab" class="tab-inactive px-6 py-3 rounded-t-lg font-medium transition-all duration-200">
+                    <i class="fas fa-laugh-squint mr-2"></i>Joke
+                </button>
+            </div>
+
+            <!-- Story Generator -->
+            <div id="story-generator" class="generator-section bg-white rounded-lg shadow-xl p-6 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Story Generator</h2>
+                <p class="text-gray-600 mb-4">Enter a word and let AI create a unique story around it.</p>
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <input type="text" 
+                           id="storyWord" 
+                           placeholder="Enter a word..." 
+                           class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    <button onclick="generateContent('story')" 
+                            class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 flex items-center justify-center">
+                        <i class="fas fa-magic mr-2"></i> Generate Story
+                    </button>
+                </div>
+                <div id="storyResult" class="mt-6 hidden">
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Your Story:</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <p id="storyText" class="text-gray-700 leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Poem Generator -->
+            <div id="poem-generator" class="generator-section hidden bg-white rounded-lg shadow-xl p-6 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Poem Generator</h2>
+                <p class="text-gray-600 mb-4">Get a beautiful poem on any topic in your preferred style.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Topic</label>
+                        <input type="text" 
+                               id="poemTopic" 
+                               placeholder="Love, nature, friendship..." 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Style</label>
+                        <select id="poemStyle" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="romantic">Romantic</option>
+                            <option value="funny">Funny</option>
+                            <option value="inspiring">Inspiring</option>
+                            <option value="sad">Sad</option>
+                            <option value="epic">Epic</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="generateContent('poem')" 
+                        class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 flex items-center justify-center w-full md:w-auto">
+                    <i class="fas fa-feather-alt mr-2"></i> Create Poem
+                </button>
+                <div id="poemResult" class="mt-6 hidden">
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Your Poem:</h3>
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 whitespace-pre-line">
+                        <p id="poemText" class="text-gray-700 leading-relaxed text-center italic"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Joke Generator -->
+            <div id="joke-generator" class="generator-section hidden bg-white rounded-lg shadow-xl p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Joke Generator</h2>
+                <p class="text-gray-600 mb-4">Get a good laugh with AI-generated jokes!</p>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Topic (optional)</label>
+                    <input type="text" 
+                           id="jokeTopic" 
+                           placeholder="e.g., programmers, animals, food..." 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <button onclick="generateContent('joke')" 
+                        class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 flex items-center justify-center w-full md:w-auto">
+                    <i class="fas fa-laugh-beam mr-2"></i> Tell Me a Joke
+                </button>
+                <div id="jokeResult" class="mt-6 hidden">
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Here's a joke for you:</h3>
+                    <div class="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+                        <p id="jokeText" class="text-gray-800 text-lg font-medium"></p>
+                        <div class="text-right mt-4">
+                            <button onclick="generateContent('joke')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                                <i class="fas fa-sync-alt mr-1"></i> Another One
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading and Error States -->
+            <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                    <p class="text-gray-700">Generating your content...</p>
+                </div>
+            </div>
+            <div id="errorContainer" class="fixed bottom-4 right-4 max-w-md bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg hidden z-50" role="alert">
+                <div class="flex">
+                    <div class="py-1">
+                        <i class="fas fa-exclamation-circle text-red-500 mr-3 mt-1"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold">Error</p>
+                        <p id="errorMessage"></p>
+                    </div>
+                    <button onclick="document.getElementById('errorContainer').classList.add('hidden')" class="ml-4 text-red-600 hover:text-red-800">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        function switchTab(tab) {
+            // Hide all sections and deactivate all tabs
+            document.querySelectorAll('.generator-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.querySelectorAll('[id$="-tab"]').forEach(tabBtn => {
+                tabBtn.classList.remove('tab-active');
+                tabBtn.classList.add('tab-inactive');
+            });
+
+            // Show selected section and activate tab
+            document.getElementById(`${tab}-generator`).classList.remove('hidden');
+            document.getElementById(`${tab}-tab`).classList.remove('tab-inactive');
+            document.getElementById(`${tab}-tab`).classList.add('tab-active');
+        }
+
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorContainer = document.getElementById('errorContainer');
+            document.getElementById('errorMessage').textContent = message;
+            errorContainer.classList.remove('hidden');
+            errorContainer.classList.add('fade-in');
+            setTimeout(() => {
+                errorContainer.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Generate content based on type (story, poem, joke)
+        async function generateContent(type) {
+            let endpoint = '';
+            let data = {};
+            let resultElement = '';
+            let resultContainer = '';
+
+            // Set up based on content type
+            switch(type) {
+                case 'story':
+                    const word = document.getElementById('storyWord').value.trim();
+                    if (!word) {
+                        showError('Please enter a word to generate a story');
+                        return;
+                    }
+                    endpoint = '/generate_story';
+                    data = { word };
+                    resultElement = 'storyText';
+                    resultContainer = 'storyResult';
+                    break;
+                
+                case 'poem':
+                    const topic = document.getElementById('poemTopic').value.trim();
+                    if (!topic) {
+                        showError('Please enter a topic for your poem');
+                        return;
+                    }
+                    const style = document.getElementById('poemStyle').value;
+                    endpoint = '/generate_poem';
+                    data = { topic, style };
+                    resultElement = 'poemText';
+                    resultContainer = 'poemResult';
+                    break;
+                
+                case 'joke':
+                    const jokeTopic = document.getElementById('jokeTopic').value.trim() || 'general';
+                    endpoint = '/generate_joke';
+                    data = { topic: jokeTopic };
+                    resultElement = 'jokeText';
+                    resultContainer = 'jokeResult';
+                    break;
+            }
+
+            try {
+                showLoading();
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to generate content');
+                }
+                
+                // Display the result
+                document.getElementById(resultElement).textContent = result.result;
+                document.getElementById(resultContainer).classList.remove('hidden');
+                document.getElementById(resultContainer).classList.add('fade-in');
+                
+                // Scroll to result
+                document.getElementById(resultContainer).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+            } catch (error) {
+                showError(error.message || 'An error occurred. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Allow pressing Enter in input fields to generate content
+        document.getElementById('storyWord')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') generateContent('story');
+        });
+        
+        document.getElementById('poemTopic')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') generateContent('poem');
+        });
+        
+        document.getElementById('jokeTopic')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') generateContent('joke');
+        });
+    </script>
+</body>
+</html>
