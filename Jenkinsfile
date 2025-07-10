@@ -6,6 +6,8 @@ pipeline {
         ENV_FILE = '.env'
         // Python version can be changed based on your requirements
         PYTHON_VERSION = '3.9'
+        // Set VENV_ACTIVATE based on the OS
+        VENV_ACTIVATE = "${isUnix() ? 'source venv/bin/activate' : '.\\venv\\Scripts\\activate'}"
     }
     
     stages {
@@ -25,14 +27,17 @@ pipeline {
                 script {
                     // Create and activate virtual environment
                     sh "python -m venv venv"
-                    sh "source venv/bin/activate"
                     
-                    // Install dependencies
-                    sh "pip install --upgrade pip"
-                    sh "pip install -r requirements.txt"
-                    
-                    // Install testing dependencies
-                    sh "pip install pytest pytest-cov"
+                    // Use the appropriate activation command based on OS
+                    if (isUnix()) {
+                        sh "${VENV_ACTIVATE} && pip install --upgrade pip"
+                        sh "${VENV_ACTIVATE} && pip install -r requirements.txt"
+                        sh "${VENV_ACTIVATE} && pip install pytest pytest-cov"
+                    } else {
+                        bat "${VENV_ACTIVATE} && python -m pip install --upgrade pip"
+                        bat "${VENV_ACTIVATE} && python -m pip install -r requirements.txt"
+                        bat "${VENV_ACTIVATE} && python -m pip install pytest pytest-cov"
+                    }
                 }
             }
         }
@@ -41,7 +46,11 @@ pipeline {
             steps {
                 script {
                     // Install linters
-                    sh "pip install flake8 black"
+                    if (isUnix()) {
+                        sh "${VENV_ACTIVATE} && pip install flake8 black"
+                    } else {
+                        bat "${VENV_ACTIVATE} && python -m pip install flake8 black"
+                    }
                     
                     // Run flake8 for code style checking
                     sh "flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics"
@@ -57,7 +66,11 @@ pipeline {
             steps {
                 script {
                     // Run pytest with coverage
-                    sh 'pytest --cov=./ --cov-report=xml --cov-report=term' 
+                    if (isUnix()) {
+                        sh "${VENV_ACTIVATE} && pytest --cov=./ --cov-report=xml --cov-report=term"
+                    } else {
+                        bat "${VENV_ACTIVATE} && python -m pytest --cov=./ --cov-report=xml --cov-report=term"
+                    }
                     
                     // Archive test results
                     junit '**/test-reports/*.xml'
@@ -80,8 +93,13 @@ pipeline {
             steps {
                 script {
                     // Run bandit for security scanning
-                    sh 'pip install bandit'
-                    sh 'bandit -r . -f html -o bandit_report.html || true'
+                    if (isUnix()) {
+                        sh "${VENV_ACTIVATE} && pip install bandit"
+                        sh "${VENV_ACTIVATE} && bandit -r . -f html -o bandit_report.html || true"
+                    } else {
+                        bat "${VENV_ACTIVATE} && python -m pip install bandit"
+                        bat "${VENV_ACTIVATE} && bandit -r . -f html -o bandit_report.html || true"
+                    }
                     
                     // Archive security report
                     publishHTML(target: [
