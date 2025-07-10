@@ -48,16 +48,23 @@ pipeline {
                     // Install linters
                     if (isUnix()) {
                         sh "${VENV_ACTIVATE} && pip install flake8 black"
+                        
+                        // Run flake8 for code style checking
+                        sh "${VENV_ACTIVATE} && flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics"
+                        sh "${VENV_ACTIVATE} && flake8 . --count --max-complexity=10 --max-line-length=127 --statistics"
+                        
+                        // Run black for code formatting
+                        sh "${VENV_ACTIVATE} && black --check --diff ."
                     } else {
                         bat "${VENV_ACTIVATE} && python -m pip install flake8 black"
+                        
+                        // Run flake8 for code style checking using Python module syntax
+                        bat "${VENV_ACTIVATE} && python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics"
+                        bat "${VENV_ACTIVATE} && python -m flake8 . --count --max-complexity=10 --max-line-length=127 --statistics"
+                        
+                        // Run black for code formatting
+                        bat "${VENV_ACTIVATE} && python -m black --check --diff ."
                     }
-                    
-                    // Run flake8 for code style checking
-                    sh "flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics"
-                    sh "flake8 . --count --max-complexity=10 --max-line-length=127 --statistics"
-                    
-                    // Run black for code formatting
-                    sh "black --check --diff ."
                 }
             }
         }
