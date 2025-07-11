@@ -44,8 +44,9 @@ pipeline {
                         try {
                             bat '.\\venv\\Scripts\\activate && python -m pytest --cov=./ --cov-report=term --ignore=venv'
                         } catch (Exception e) {
-                        echo "Tests completed with issues: ${e.getMessage()}"
-                        currentBuild.result = 'UNSTABLE'
+                            echo "Tests completed with issues: ${e.getMessage()}"
+                            currentBuild.result = 'UNSTABLE'
+                        }
                     }
                 }
             }
