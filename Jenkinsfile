@@ -21,8 +21,8 @@ pipeline {
         stage('Lint') {
             steps {
                 bat '.\\venv\\Scripts\\activate && python -m pip install flake8 black'
-                // Only check your project files, not the venv
-                bat '.\\venv\\Scripts\\activate && python -m flake8 *.py --count --select=E9,F63,F7,F82 --show-source --statistics || echo "Linting completed with warnings"'
+                // Fix: Use current directory instead of *.py wildcard
+                bat '.\\venv\\Scripts\\activate && python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=venv || echo "Linting completed with warnings"'
             }
             post {
                 failure {
@@ -34,7 +34,7 @@ pipeline {
         stage('Test') {
             steps {
                 bat '.\\venv\\Scripts\\activate && python -m pip install pytest pytest-cov'
-                bat '.\\venv\\Scripts\\activate && python -m pytest --cov=./ --cov-report=term || echo "Tests completed"'
+                bat '.\\venv\\Scripts\\activate && python -m pytest --cov=./ --cov-report=term --ignore=venv || echo "Tests completed"'
             }
             post {
                 failure {
@@ -46,8 +46,8 @@ pipeline {
         stage('Security Scan') {
             steps {
                 bat '.\\venv\\Scripts\\activate && python -m pip install bandit'
-                // Only scan your project files, not the venv
-                bat '.\\venv\\Scripts\\activate && bandit -r *.py -f html -o bandit_report.html || echo "Security scan completed"'
+                // Fix: Use current directory and exclude venv
+                bat '.\\venv\\Scripts\\activate && bandit -r . -f html -o bandit_report.html --exclude ./venv || echo "Security scan completed"'
             }
         }
         
