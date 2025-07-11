@@ -8,8 +8,8 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Initialize Groq client
-client = Groq(api_key="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")
+# Use environment variable for API key
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def generate_with_groq(prompt, max_tokens=300, temperature=0.8):
     """Helper function to generate content with Groq"""
