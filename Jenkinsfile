@@ -13,7 +13,7 @@ pipeline {
         stage('Set Up Python Environment') {
             steps {
                 bat 'python -m venv venv'
-                bat '.\\venv\\Scripts\\activate && python -m pip install --upgrade pip'
+                // Skip pip upgrade to avoid compatibility issues
                 bat '.\\venv\\Scripts\\activate && python -m pip install -r requirements.txt'
             }
         }
@@ -46,7 +46,6 @@ pipeline {
             }
             post {
                 always {
-                    // Archive test results if they exist
                     script {
                         if (fileExists('test-results.xml')) {
                             archiveArtifacts artifacts: 'test-results.xml', allowEmptyArchive: true
@@ -72,7 +71,6 @@ pipeline {
             }
             post {
                 always {
-                    // Archive security report
                     script {
                         if (fileExists('bandit_report.html')) {
                             archiveArtifacts artifacts: 'bandit_report.html', allowEmptyArchive: true
@@ -113,11 +111,6 @@ pipeline {
             }
             steps {
                 echo 'Deploying application...'
-                // Add your deployment steps here
-                // For example:
-                // bat '.\\venv\\Scripts\\activate && python app.py &'
-                // or copy to deployment directory
-                // bat 'xcopy build\\*.* C:\\deployment\\app\\ /Y'
                 echo 'Deployment completed'
             }
         }
@@ -125,7 +118,6 @@ pipeline {
     
     post {
         always {
-            // Clean up workspace
             cleanWs()
         }
         success {
