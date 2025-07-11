@@ -14,8 +14,10 @@ pipeline {
             steps {
                 // Install dependencies using system Python
                 bat 'python -m pip install --upgrade pip'
-                if (fileExists('requirements.txt')) {
-                    bat 'python -m pip install -r requirements.txt'
+                script {
+                    if (fileExists('requirements.txt')) {
+                        bat 'python -m pip install -r requirements.txt'
+                    }
                 }
             }
         }
