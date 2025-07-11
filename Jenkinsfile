@@ -12,15 +12,9 @@ pipeline {
         
         stage('Set Up Python Environment') {
             steps {
-                // Remove existing venv if it exists
-                bat 'if exist venv rmdir /s /q venv'
-                // Create fresh virtual environment
-                bat 'python -m venv venv --clear'
-                // Upgrade pip using the system Python first
-                bat 'python -m pip install --upgrade pip'
-                // Then use the virtual environment's pip
-                bat '.\\.venv\\Scripts\python.exe -m pip install --upgrade pip setuptools wheel'
-                bat '.\\.venv\\Scripts\pip install -r requirements.txt'
+                bat 'python -m venv venv'
+                bat '.\\venv\\Scripts\\activate && python -m pip install --upgrade pip'
+                bat '.\\venv\\Scripts\\activate && python -m pip install -r requirements.txt'
             }
         }
         
