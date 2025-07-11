@@ -74,5 +74,6 @@ def generate_joke():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# app.py
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG', 'False').lower() == 'true')
