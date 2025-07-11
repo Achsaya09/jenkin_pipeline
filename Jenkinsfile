@@ -33,12 +33,17 @@ pipeline {
         }
         
         stage('Test') {
-            steps {
-                bat '.\\venv\\Scripts\\activate && python -m pip install pytest pytest-cov'
-                script {
-                    try {
-                        bat '.\\venv\\Scripts\\activate && python -m pytest --cov=./ --cov-report=term --ignore=venv'
-                    } catch (Exception e) {
+            stage('Install Dependencies') {
+                steps {
+                    bat '.\\venv\\Scripts\\activate && python -m pip install pytest pytest-cov flask-limiter'
+                }
+            }
+            stage('Run Tests') {
+                steps {
+                    script {
+                        try {
+                            bat '.\\venv\\Scripts\\activate && python -m pytest --cov=./ --cov-report=term --ignore=venv'
+                        } catch (Exception e) {
                         echo "Tests completed with issues: ${e.getMessage()}"
                         currentBuild.result = 'UNSTABLE'
                     }
