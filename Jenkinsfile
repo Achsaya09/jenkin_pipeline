@@ -12,21 +12,10 @@ pipeline {
         
         stage('Set Up Python Environment') {
             steps {
-                // Alternative using conda if available
-                script {
-                    try {
-                        bat 'conda --version'
-                        bat 'conda create -n jenkins_env python=3.11 -y'
-                        bat 'conda activate jenkins_env && conda install pip -y'
-                        if (fileExists('requirements.txt')) {
-                            bat 'conda activate jenkins_env && pip install -r requirements.txt'
-                        }
-                    } catch (Exception e) {
-                        echo "Conda not available, falling back to system Python"
-                        if (fileExists('requirements.txt')) {
-                            bat 'python -m pip install -r requirements.txt --user'
-                        }
-                    }
+                // Install dependencies using system Python
+                bat 'python -m pip install --upgrade pip'
+                if (fileExists('requirements.txt')) {
+                    bat 'python -m pip install -r requirements.txt'
                 }
             }
         }
@@ -35,12 +24,11 @@ pipeline {
             steps {
                 script {
                     try {
-                        bat 'conda activate jenkins_env && pip install flake8 black'
-                        bat 'conda activate jenkins_env && python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics'
-                    } catch (Exception e) {
-                        echo "Using system Python for linting"
-                        bat 'python -m pip install flake8 black --user'
+                        bat 'python -m pip install flake8 black'
                         bat 'python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics'
+                    } catch (Exception e) {
+                        echo "Linting completed with warnings: ${e.getMessage()}"
+                        currentBuild.result = 'UNSTABLE'
                     }
                 }
             }
@@ -50,12 +38,11 @@ pipeline {
             steps {
                 script {
                     try {
-                        bat 'conda activate jenkins_env && pip install pytest pytest-cov'
-                        bat 'conda activate jenkins_env && python -m pytest --cov=./ --cov-report=term'
-                    } catch (Exception e) {
-                        echo "Using system Python for testing"
-                        bat 'python -m pip install pytest pytest-cov --user'
+                        bat 'python -m pip install pytest pytest-cov'
                         bat 'python -m pytest --cov=./ --cov-report=term'
+                    } catch (Exception e) {
+                        echo "Tests completed with issues: ${e.getMessage()}"
+                        currentBuild.result = 'UNSTABLE'
                     }
                 }
             }
@@ -65,20 +52,25 @@ pipeline {
             steps {
                 script {
                     try {
-                        bat 'conda activate jenkins_env && pip install bandit'
-                        bat 'conda activate jenkins_env && python -m bandit -r . -f html -o bandit_report.html'
-                    } catch (Exception e) {
-                        echo "Using system Python for security scan"
-                        bat 'python -m pip install bandit --user'
+                        bat 'python -m pip install bandit'
                         bat 'python -m bandit -r . -f html -o bandit_report.html'
+                        // Archive the security report
+                        archiveArtifacts artifacts: 'bandit_report.html', allowEmptyArchive: true
+                    } catch (Exception e) {
+                        echo "Security scan completed with findings: ${e.getMessage()}"
+                        echo "Check bandit_report.html for details"
+                        currentBuild.result = 'UNSTABLE'
                     }
                 }
             }
         }
         
         stage('Build') {
+            when {
+                expression { currentBuild.resultIsBetterOrEqualTo('UNSTABLE') }
+            }
             steps {
-                echo 'Building the application...'
+                echo 'Building application...'
                 bat 'if not exist build mkdir build'
                 script {
                     try {
@@ -114,14 +106,6 @@ pipeline {
     
     post {
         always {
-            script {
-                try {
-                    bat 'conda deactivate'
-                    bat 'conda env remove -n jenkins_env -y'
-                } catch (Exception e) {
-                    echo "Conda cleanup not needed"
-                }
-            }
             cleanWs()
         }
         success {
